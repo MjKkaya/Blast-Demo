@@ -1,4 +1,0 @@
-repository "Blast-Demo@SMDevTeam@cloud"
-  path "/"
-    br "/main"
-    co "/main"
