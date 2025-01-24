@@ -5,15 +5,12 @@ public class GridDotItem : BaseGridItem, IAnchorable
 {
     private GridDotData _dotData;
 
-    // private readonly List<ISettleable> _intersectingCells = new (4);
-
     public void Init(GridDotData dotData, Transform newParent, Vector3 position)
     {
         transform.SetParent(newParent);
         _dotData = dotData;
         _rectTransform.anchoredPosition3D = position;
         _rectTransform.localScale = _originalScale;
-        // _intersectingCells.Clear();
     }
 
 

@@ -23,7 +23,7 @@ public class DataFactory <T> where T : class, IPoolable, new()
 
     private void InitObjectPool()
     {
-        Debug.Log($"{this}-InitObjectPool");
+        // Debug.Log($"{this}-InitObjectPool");
         _gridDotDataPool = new ObjectPool<T>(CreatePooledData, OnTakeFromPool, OnReturnedToPool, OnDestroyPoolObject, true, 30);
     }
 
@@ -52,7 +52,7 @@ public class DataFactory <T> where T : class, IPoolable, new()
     // We can control what the destroy behavior does, here we destroy the GameObject.
     private void OnDestroyPoolObject(T dataObj)
     {
-        Debug.Log($"{this}-OnDestroyPoolObject-obj:{dataObj}");
+        // Debug.Log($"{this}-OnDestroyPoolObject-obj:{dataObj}");
         dataObj.Dispose();
     }
 
@@ -66,7 +66,7 @@ public class DataFactory <T> where T : class, IPoolable, new()
 
     public void ReleaseDataInstance(T dataObj)
     {
-        Debug.Log($"{this}-ReleaseDataInstance-CountAll:{_gridDotDataPool.CountAll}, dataObj:{dataObj}");
+        // Debug.Log($"{this}-ReleaseDataInstance-CountAll:{_gridDotDataPool.CountAll}, dataObj:{dataObj}");
         _gridDotDataPool.Release(dataObj);
     }
 
@@ -75,7 +75,7 @@ public class DataFactory <T> where T : class, IPoolable, new()
 
     public void CreateDataList(List<T> dataList, int dataCount)
     {
-        Debug.Log($"{this}-CreateDataList-dataCount{dataCount}");
+        // Debug.Log($"{this}-CreateDataList-dataCount{dataCount}");
         for (int k = 0; k < dataCount; k++)
         {
             dataList.Add(GetDataInstance());

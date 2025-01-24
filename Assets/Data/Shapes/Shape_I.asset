@@ -13,3 +13,5 @@ MonoBehaviour:
   m_Name: Shape_I
   m_EditorClassIdentifier: 
   ShapeDirection: 02000000
+  PivotStartPositionX: 0
+  PivotStartPositionY: 0

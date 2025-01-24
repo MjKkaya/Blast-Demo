@@ -1,6 +1,8 @@
 public interface IPoolable
 {
-    void Dispose() { }
+    public void Dispose() { }
 
-    void Clear() { }
+    public void Clear() { }
+    
+    public void Prepare() { }
 };

@@ -1,8 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GridCellsController: BaseGridController<GridCellData, GridCellItem>
+public class GridCellsController: BaseGridController<GridCellData, GridCellItem>, IResettable
 {
+    private List<int> _filledRowIndexList;
+    private List<int> _filledColumnIndexList;
+
+    private List<GridCellData> _checkedCellList;
+    private List<GridCellData> _filledCellList;
+    
+    
     public void Initialize(LevelData levelData, Transform gridCellItemContainer, GridCellItem gridCellItemPrefab)
     {
         _levelData = levelData;
@@ -11,81 +18,164 @@ public class GridCellsController: BaseGridController<GridCellData, GridCellItem>
         _dataFactory = new DataFactory<GridCellData>();
         _itemFactory = new ItemFactory<GridCellItem>(gridCellItemPrefab);
         
+        _filledRowIndexList = new(_levelData.CellCountInRow); 
+        _filledColumnIndexList = new(_levelData.CellCountInRow); 
+        
+        int listCount = _levelData.CellCountInColumn * _levelData.CellCountInRow;
+        _checkedCellList = new (listCount);
+        _filledCellList = new (listCount);
+        
         CreateCells();
     }
-    /*
-    // todo: We can assign the dots to a cell in instantiate time!
-    public void AssignDotsToCells(List<GridDotItem> dotItemList)
+    
+    public void Reset()
     {
-        GridDotItem leftBottomDot;
-        GridDotItem rightBottomDot;
-        GridDotItem leftTopDot;
-        GridDotItem rightTopDot;
-        
-        for (int i = 0; i < _itemCount; i++)
+        int listCount = _itemList.Count;
+        for (int i = 0; i < listCount; i++)
         {
-            GridCellData gridCellData = _dataList[i];
-            
-            //left bottom
-            int dotIndexNo =  (gridCellData.GridPosition.Y * _levelData.CellCountInRow) + (gridCellData.GridPosition.Y % _levelData.CellCountInColumn) + gridCellData.GridPosition.X;
-            leftBottomDot = dotItemList[dotIndexNo];
-            leftBottomDot.AddIntersectingCell(_itemList[i]);
-            
-            //right bottom
-            dotIndexNo++;
-            rightBottomDot = dotItemList[dotIndexNo];
-            rightBottomDot.AddIntersectingCell(_itemList[i]);
-            
-            //left top
-            dotIndexNo += _levelData.CellCountInRow;
-            leftTopDot = dotItemList[dotIndexNo];
-            leftTopDot.AddIntersectingCell(_itemList[i]);
-            
-            //right top
-            dotIndexNo++;
-            rightTopDot = dotItemList[dotIndexNo];
-            rightTopDot.AddIntersectingCell(_itemList[i]);
-            
-            _itemList[i].AssignRelatedDots(leftBottomDot, rightBottomDot, leftTopDot, rightTopDot);
+            GridCellItem cellItem = _itemList[i];
+            cellItem.SetAsUnoccupied(_levelData.CellDefaultColor);
         }
     }
-    */
-    /*
-    public void AssignLinesToCells(List<GridLineItem> dotItemList)
+
+    public List<GridCellData> CheckAndSetFilledCells(List<GridLineData> lineDatas)
     {
-        GridLineItem bottom;
-        GridLineItem left;
-        GridLineItem right;
-        GridLineItem top;
+        int lineCount = lineDatas.Count;
+        _checkedCellList.Clear();
+        _filledCellList.Clear();
         
-        for (int i = 0; i < _itemCount; i++)
+        // Debug.Log($"Mj-CheckAndSetFilledCells-lineCount:{lineCount}");
+        for (int l = 0; l < lineCount; l++)
         {
-            GridCellData gridCellData = _dataList[i];
-            
-            //bottom
-            int lineIndexNo =  gridCellData.GridPosition.X + (gridCellData.GridPosition.Y * ((_levelData.CellCountInRow * 2 ) +1));
-            bottom = dotItemList[lineIndexNo];
-            bottom.AddIntersectingCell(_itemList[i]);
-            
-            //left
-            lineIndexNo += _levelData.CellCountInRow;
-            left = dotItemList[lineIndexNo];
-            left.AddIntersectingCell(_itemList[i]);
-            
-            //right
-            lineIndexNo++;
-            right = dotItemList[lineIndexNo];
-            right.AddIntersectingCell(_itemList[i]);
-            
-            //top
-            lineIndexNo += _levelData.CellCountInRow;
-            top = dotItemList[lineIndexNo];
-            top.AddIntersectingCell(_itemList[i]);
-            
-            _itemList[i].AssignRelatedLines(bottom, left, right, top);
+            List<GridCellData> cellDataList = lineDatas[l].ConnectedCellList;
+            for (int c = 0; c < cellDataList.Count; c++)
+            {
+                GridCellData gridCellData = cellDataList[c];
+                // Debug.Log($"Mj-CheckAndSetFilledCells:{gridCellData.LocationIndexNo}");
+                if(_checkedCellList.Contains(gridCellData))
+                    continue;
+                
+                _checkedCellList.Add(gridCellData);//to prevent to check again same cell!
+                bool isCellFull = gridCellData.CheckSetCellState();
+                if (!isCellFull)
+                    continue;
+                
+                _itemList[gridCellData.LocationIndexNo].SetAsOccupied(_levelData.CellFullColor);
+                _filledCellList.Add(gridCellData);
+            }
+        }
+
+        return _filledCellList;
+    }
+
+    
+    public void CheckAndDestroyFilledRowAndColumn(List<GridCellData> filledCellList)
+    {
+        _filledRowIndexList.Clear();
+        _filledColumnIndexList.Clear();
+        
+        int cellCount = filledCellList.Count;
+        for (int i = 0; i < cellCount; i++)
+        {
+            GridCellData gridCellData = filledCellList[i];
+            if(IsRowOccupied(gridCellData.GridPosition.Y))
+            {
+                // Debug.Log($"Mj-RowOccupied:{gridCellData.GridPosition.Y}");
+                _filledRowIndexList.Add(gridCellData.GridPosition.Y);
+            }
+            if (IsColumnOccupied(gridCellData.GridPosition.X))
+            {
+                // Debug.Log($"Mj-ColumnOccupied:{gridCellData.GridPosition.Y}");
+                _filledColumnIndexList.Add(gridCellData.GridPosition.X);
+            }
+        }
+
+        if (_filledRowIndexList.Count > 0)
+        {
+            int rowCount = _filledRowIndexList.Count; 
+            for (int i = 0; i < rowCount; i++)
+            {
+                // Debug.Log($"Mj-SetUnoccupiedCellsInRow:{filledRowIndexList[i]}");
+                SetUnoccupiedCellsInRow(_filledRowIndexList[i]);
+                GameplayEvents.OnFilledWholeLine?.Invoke(_levelData.CellCountInRow);
+            }
+        }
+        
+        if (_filledColumnIndexList.Count > 0)
+        {
+            int columnCount = _filledColumnIndexList.Count; 
+            for (int i = 0; i < columnCount; i++)
+            {
+                // Debug.Log($"Mj-SetUnoccupiedCellsInColumn{filledColumnIndexList[i]}");
+                SetUnoccupiedCellsInColumn(_filledColumnIndexList[i]);
+                GameplayEvents.OnFilledWholeLine?.Invoke(_levelData.CellCountInColumn);
+            }
         }
     }
-    */
+    private bool IsRowOccupied(int rowIndexNo)
+    {
+        int indexNo = rowIndexNo * _levelData.CellCountInRow;
+        // Debug.Log($"Mj-IsRowOccupied-rowIndexNo:{rowIndexNo}, indexNo:{indexNo}");
+        for (int i = 0; i <  _levelData.CellCountInRow; i++)
+        {
+            // Debug.Log($"Mj-IsRowOccupied-i:{i}, indexNo:{indexNo}, IsOccupied:{_dataList[indexNo].IsOccupied}");
+            if(!_dataList[indexNo].IsOccupied)
+                return false;
+            indexNo++;
+        }
+        return true;
+    }
+    private bool IsColumnOccupied(int columnIndexNo)
+    {
+        int indexNo = columnIndexNo;
+        // Debug.Log($"Mj-IsColumnOccupied-firstIndexInRow:{indexNo}, _levelData.CellCountInRow:{_levelData.CellCountInColumn}");
+        for (int i = 0; i < _levelData.CellCountInColumn; i++)
+        {
+            // Debug.Log($"Mj-IsColumnOccupied-i:{i}, indexNo:{indexNo}, IsOccupied:{_dataList[indexNo].IsOccupied}");
+            if(!_dataList[indexNo].IsOccupied)
+                return false;
+            indexNo += _levelData.CellCountInRow;
+        }
+        return true;
+    }
+
+    private void SetUnoccupiedCellsInRow(int rowIndexNo)
+    {
+        int indexNo = rowIndexNo * _levelData.CellCountInRow;
+        for (int i = 0; i < _levelData.CellCountInRow; i++)
+        {
+            // Debug.Log($"Mj-SetUnoccupiedCellsInRow-indexNo:{indexNo}");
+            _itemList[indexNo].SetAsUnoccupied(_levelData.CellDefaultColor);
+            SetUnoccupiedRelatedCell(indexNo);
+            GameplayEvents.CellMadeUnoccupied?.Invoke(indexNo);
+            indexNo++;
+        }
+    }
+    private void SetUnoccupiedCellsInColumn(int columnIndexNo)
+    {
+        int indexNo = columnIndexNo;
+        // Debug.Log($"Mj-SetUnoccupiedCellsInColumn-indexNo:{indexNo}");
+        for (int i = 0; i < _levelData.CellCountInColumn; i++)
+        {
+            _itemList[indexNo].SetAsUnoccupied(_levelData.CellDefaultColor);
+            SetUnoccupiedRelatedCell(indexNo);
+            GameplayEvents.CellMadeUnoccupied?.Invoke(indexNo);
+            indexNo += _levelData.CellCountInRow;
+        }
+    }
+    private void SetUnoccupiedRelatedCell(int cellIndexNo)
+    {
+        GridLineData[] lineDataList = _dataList[cellIndexNo].ConnectedLines;
+        for (int i = 0; i < lineDataList.Length; i++)
+        {
+            GridLineData gridLineData = lineDataList[i];
+            foreach (GridCellData cellData in gridLineData.ConnectedCellList)
+            {
+                _itemList[cellData.LocationIndexNo].SetAsUnoccupied(_levelData.CellDefaultColor);
+            }
+        }
+    }
+    
 
     private void CreateCells()
     {
@@ -104,7 +194,7 @@ public class GridCellsController: BaseGridController<GridCellData, GridCellItem>
             for (int c = 0; c < columnCount; c++)
             {
                 GridCellData gridCellData = _dataList[indexNo];
-                gridCellData.Init(indexNo, new GridPosition(c,r), _levelData.CellDefaultColor, _levelData.CellFullColor);
+                gridCellData.Init(indexNo, new GridPosition(c,r));
                 
                 GridCellItem gridCellItem = _itemList[indexNo];
                 Vector3 position = CalculateItemPosition(r, c, _levelData.GapBetweenCell);
@@ -121,4 +211,5 @@ public class GridCellsController: BaseGridController<GridCellData, GridCellItem>
         float posY = _levelData.CellStartPos.y + (rowIndexNo * gap);
         return new Vector3(posX, posY);
     }
+    
 }

@@ -5,18 +5,25 @@ using UnityEngine;
 public class DraggableShapeData : ScriptableObject
 {
     public ShapeDirections[] ShapeDirection;
+    [Range(0, 1)]
+    public float HeightFactor;
+    [Range(-0.5f, 0.5f)]
+    public float WidthFactor;
+
+    //This is calculating in DraggableShape.cs 
+    private Vector2 _pivotPositionGap;
+    public Vector2 PivotPositionGap => _pivotPositionGap;
+    
+    public void SetPivotPositionGap(Vector2 itemSize, Vector2 itemScale)
+    {
+        // _pivotPositionGap = new Vector2(itemSize.x * WidthFactor * itemScale.x, itemSize.y * HeightFactor * itemScale.y);
+        // Debug.Log($"itemSize:{itemSize}, _pivotPositionGap:{_pivotPositionGap}");
+        _pivotPositionGap = new Vector2(itemSize.x * WidthFactor * itemScale.x, itemSize.y * HeightFactor * itemScale.y);
+        // Vector2 newSize = new Vector2(itemSize.x * WidthFactor * itemScale.x * canvasScaleFactor.x, itemSize.y * HeightFactor * itemScale.y * canvasScaleFactor.y);
+        // _pivotPositionGap = oldSize;
+    }
 }
 
-/*
-[Flags]
-public enum ShapeDirection
-{ 
-    Left = 1,
-    Right = 2,
-    Up = 4,
-    Down = 8
-}
-*/
 
 public enum ShapeDirections
 {

@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-public abstract class BaseGridController<Data,Item> : IDisposable where Data : BaseGridData, new() where Item : BaseGridItem
+public abstract class BaseGridController<D,I> : IDisposable where D : BaseGridData, new() where I : BaseGridItem
 {
     protected LevelData _levelData;
     protected Transform _itemContainer;
 
-    protected DataFactory<Data> _dataFactory;
-    protected ItemFactory<Item> _itemFactory;
+    protected DataFactory<D> _dataFactory;
+    protected ItemFactory<I> _itemFactory;
     
-    protected List<Data> _dataList = new ();
-    public List<Data> DataList => _dataList;
+    protected List<D> _dataList = new ();
+    public List<D> DataList => _dataList;
     
-    protected List<Item> _itemList = new ();
-    public List<Item> ItemList => _itemList;
+    protected List<I> _itemList = new ();
+    public List<I> ItemList => _itemList;
 
     protected int _itemCount;
     
@@ -27,4 +27,9 @@ public abstract class BaseGridController<Data,Item> : IDisposable where Data : B
         _dataList = null;
         _itemList = null;
     }
+}
+
+public interface IResettable
+{
+    void Reset();
 }

@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GridLinesController : BaseGridController<GridLineData, GridLineItem>
+public class GridLinesController : BaseGridController<GridLineData, GridLineItem>, IResettable
 {
-    private readonly List<GridLineData> _matchedLineList = new((int)ShapeDirections.Max);
+    private readonly List<GridLineData> _matchedDataList = new((int)ShapeDirections.Max);
+    public List<GridLineData> MatchedDataList => _matchedDataList;
     
     
     public void Initialize(LevelData levelData, Transform itemContainer, GridLineItem gridLineItemPrefab)
@@ -15,6 +16,16 @@ public class GridLinesController : BaseGridController<GridLineData, GridLineItem
         _itemFactory = new ItemFactory<GridLineItem>(gridLineItemPrefab);
         
         CreateLines();
+    }
+    
+    public void Reset()
+    {
+        int listCount = _itemList.Count;
+        for (int i = 0; i < listCount; i++)
+        {
+            GridLineItem lineItem = _itemList[i];
+            lineItem.SetAsUnoccupied(_levelData.LineDefaultColor);
+        }
     }
     
     private void CreateLines()
@@ -56,6 +67,41 @@ public class GridLinesController : BaseGridController<GridLineData, GridLineItem
         }
     }
 
+    /// <summary>
+    ///  In this method, cells and rows are connected to each other via the data class.
+    /// </summary>
+    /// <param name="cellDataList"></param>
+    public void AssignConnectedCellsAndLines(List<GridCellData> cellDataList)
+    {
+        int cellCount = cellDataList.Count;
+        for (int i = 0; i < cellCount; i++)
+        {
+            //Actually there are only max 2 connected cell for each line.
+            //  "Left" or  "Right" or "Left and Right"  
+            //  "Up" or  "Down" or "Up and Down"
+            GridCellData cellData = cellDataList[i];
+            
+            //The line down-side the cell.
+            int lineIndexNo = cellData.LocationIndexNo + (cellData.GridPosition.Y * _levelData.CellCountInRow) + cellData.GridPosition.Y;
+            _dataList[lineIndexNo].AddConnectedCell(cellData);
+            cellData.AddConnectedLine((int)ShapeDirections.Down, _dataList[lineIndexNo]);
+            
+            //The line left-side of the cell.
+            lineIndexNo += _levelData.CellCountInRow;
+            _dataList[lineIndexNo].AddConnectedCell(cellData);
+            cellData.AddConnectedLine((int)ShapeDirections.Left, _dataList[lineIndexNo]);
+            
+            //The line right-side of the cell.
+            lineIndexNo++;
+            _dataList[lineIndexNo].AddConnectedCell(cellData);
+            cellData.AddConnectedLine((int)ShapeDirections.Right, _dataList[lineIndexNo]);
+            
+            //The line up-side of the cell.
+            lineIndexNo += _levelData.CellCountInRow;
+            _dataList[lineIndexNo].AddConnectedCell(cellData);
+            cellData.AddConnectedLine((int)ShapeDirections.Up, _dataList[lineIndexNo]);
+        }
+    }
 
     public bool CheckAndSetMatchedLines(ShapeDirections[] shapeDirections, int startingDotLocationIndex, List<GridDotData> dotDataList)
     {
@@ -63,7 +109,7 @@ public class GridLinesController : BaseGridController<GridLineData, GridLineItem
         ResetHighlightedLines();
         UpdateMatchedLineList(shapeDirections, startingDotLocationIndex, dotDataList);
 
-        if (directionLength == _matchedLineList.Count)
+        if (directionLength == _matchedDataList.Count)
         {
             SetLinesAsOccupied();
             return true;
@@ -78,6 +124,7 @@ public class GridLinesController : BaseGridController<GridLineData, GridLineItem
     {
         int directionLength = shapeDirections.Length;
         int dotLocationIndex = startingDotLocationIndex;
+        int dotCount = dotDataList.Count;
         for (int i = 0; i < directionLength; i++)
         {
             GridDotData dotData = dotDataList[dotLocationIndex];
@@ -85,41 +132,23 @@ public class GridLinesController : BaseGridController<GridLineData, GridLineItem
             if (gridLineData == null || gridLineData.IsOccupied)
                 break;
              
-            _matchedLineList.Add(gridLineData);
-            dotLocationIndex = GetConnectedDotLocationIndex(dotLocationIndex, shapeDirections[i]);
+            _matchedDataList.Add(gridLineData);
+            dotLocationIndex = GridDotsController.GetConnectedDotLocationIndex(_levelData.CellCountInRow, dotLocationIndex, shapeDirections[i]);
+            if (dotLocationIndex < 0 || dotLocationIndex > dotCount)
+                break;
         }
     }
     
-    private int GetConnectedDotLocationIndex(int dotIndexNo, ShapeDirections shapeDirection)
-    {
-        int nextDotIndexNo = dotIndexNo;
-
-        switch (shapeDirection)
-        {
-            case ShapeDirections.Left:
-                nextDotIndexNo--;
-                break;
-            case ShapeDirections.Right:
-                nextDotIndexNo++;
-                break;
-            case ShapeDirections.Up:
-                nextDotIndexNo += _levelData.CellCountInRow + 1;
-                break;
-            case ShapeDirections.Down:
-                nextDotIndexNo -= _levelData.CellCountInRow + 1;
-                break;
-        }
-        
-        return nextDotIndexNo;
-    }
+    
     
     public void CheckAndMarkHighlightedLines(ShapeDirections[] shapeDirections, int startingDotLocationIndex, List<GridDotData> dotDataList)
     {
-        // ResetHighlightedLines();
+        ResetHighlightedLines();
         UpdateMatchedLineList(shapeDirections, startingDotLocationIndex, dotDataList);
         
         int directionLength = shapeDirections.Length;
-        if (directionLength != _matchedLineList.Count)
+        // Debug.Log($"CheckAndMarkHighlightedLines-shapeDirections/_matchedDataList:{directionLength}/{_matchedDataList.Count}");
+        if (directionLength != _matchedDataList.Count)
             return;
 
         SetLinesAsHighlighted();
@@ -127,34 +156,43 @@ public class GridLinesController : BaseGridController<GridLineData, GridLineItem
     
     public void ResetHighlightedLines()
     {
-        int count = _matchedLineList.Count;
-        // Debug.Log($"ResetHighlightedLines:{count}");
+        int count = _matchedDataList.Count;
         for (int i = 0; i < count; i++)
         {
-            GridLineData data = _matchedLineList[i];
-            _itemList[data.LocationIndexNo].BackToDefaultView();
+            GridLineData data = _matchedDataList[i];
+            if(!data.IsOccupied)
+                _itemList[data.LocationIndexNo].BackToDefaultView(_levelData.LineDefaultColor);
         }
-        _matchedLineList.Clear();
+        _matchedDataList.Clear();
     }
 
     private void SetLinesAsHighlighted()
     {
-        int count = _matchedLineList.Count;
+        int count = _matchedDataList.Count;
         for (int i = 0; i < count; i++)
         {
-            GridLineData data = _matchedLineList[i];
-            _itemList[data.LocationIndexNo].SetHighlightedView();
+            GridLineData data = _matchedDataList[i];
+            _itemList[data.LocationIndexNo].SetHighlightedView(_levelData.LineHighlightedColor);
         }
     }
     private void SetLinesAsOccupied()
     {
-        int count = _matchedLineList.Count;
+        int count = _matchedDataList.Count;
         for (int i = 0; i < count; i++)
         {
-            GridLineData data = _matchedLineList[i];
-            _itemList[data.LocationIndexNo].SetOccupied();
+            GridLineData data = _matchedDataList[i];
+            _itemList[data.LocationIndexNo].SetAsOccupied(_levelData.LineFullColor);
+            // Debug.Log($"SetLinesAsOccupied:{data.LocationIndexNo}=>{data.PrintConnectedCell()}");
         }
-        _matchedLineList.Clear();
+    }
+    public void SetLinesAsUnOccupied(GridLineData[] dataList)
+    {
+        int count = dataList.Length;
+        for (int i = 0; i < count; i++)
+        {
+            GridLineData data = dataList[i];
+            _itemList[data.LocationIndexNo].SetAsUnoccupied(_levelData.LineDefaultColor);
+        }
     }
 
     private Vector3 CalculateItemPosition(int rowIndexNo, int columnIndexNo, float gap)

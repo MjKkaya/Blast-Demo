@@ -22,5 +22,6 @@ public class LevelData : ScriptableObject
     public Color CellFullColor;
     [Space]
     public Color LineDefaultColor;
+    public Color LineHighlightedColor;
     public Color LineFullColor;
 }

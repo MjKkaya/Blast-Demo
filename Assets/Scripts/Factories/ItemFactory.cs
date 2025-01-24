@@ -17,7 +17,6 @@ public class ItemFactory <T> : Object where T  : Object, IPoolable
     public void Dispose()
     {
         _gridDotDataPool.Dispose();
-        BaseGridData test = new BaseGridData();
     }
 
 
@@ -25,7 +24,7 @@ public class ItemFactory <T> : Object where T  : Object, IPoolable
 
     private void InitObjectPool()
     {
-        Debug.Log($"{this}-InitObjectPool");
+        // Debug.Log($"{this}-InitObjectPool");
         _gridDotDataPool = new ObjectPool<T>(CreatePooledData, OnTakeFromPool, OnReturnedToPool, OnDestroyPoolObject, true, 30);
     }
 
@@ -69,7 +68,7 @@ public class ItemFactory <T> : Object where T  : Object, IPoolable
 
     public void ReleaseItemInstance(T itemObj)
     {
-        Debug.Log($"{this}-ReleaseItemInstance-CountAll:{_gridDotDataPool.CountAll}, itemObj:{itemObj}");
+        // Debug.Log($"{this}-ReleaseItemInstance-CountAll:{_gridDotDataPool.CountAll}, itemObj:{itemObj}");
         _gridDotDataPool.Release(itemObj);
     }
 
@@ -78,7 +77,7 @@ public class ItemFactory <T> : Object where T  : Object, IPoolable
 
     public void CreateItemList(List<T> dataList, int dataCount)
     {
-        Debug.Log($"{this}-CreateDataList-dataCount{dataCount}");
+        // Debug.Log($"{this}-CreateDataList-dataCount{dataCount}");
         for (int k = 0; k < dataCount; k++)
         {
             dataList.Add(GetItemInstance());

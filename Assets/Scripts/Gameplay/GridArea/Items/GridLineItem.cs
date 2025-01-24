@@ -1,14 +1,13 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+
 
 public class GridLineItem  : BaseGridItem
 {
     private GridLineData _lineData;
     
-    // private readonly List<ISettleable> _intersectingCells = new(2);
-    
     [SerializeField]private Image _image;
+    
     
     public void Init(GridLineData lineData, Transform newParent, Vector3 position, Quaternion rotation)
     {
@@ -17,27 +16,27 @@ public class GridLineItem  : BaseGridItem
         _rectTransform.anchoredPosition3D = position;
         _rectTransform.localScale = _originalScale;
         _rectTransform.localRotation = rotation;
-        // _intersectingCells.Clear();
     }
     
-    public void AddIntersectingCell(ISettleable cellItem)
+    public void BackToDefaultView(Color color)
     {
-        // _intersectingCells.Add(cellItem);
-    }
-
-    public void BackToDefaultView()
-    {
-        _image.color = Color.white;
+        _image.color = color;
     }
     
-    public void SetHighlightedView()
+    public void SetHighlightedView(Color color)
     {
-        _image.color = Color.green;
+        _image.color = color;
     }
     
-    public void SetOccupied()
+    public void SetAsOccupied(Color color)
     {
-        _image.color = Color.red;
+        _image.color = color;
         _lineData.IsOccupied = true;
+    }
+    
+    public void SetAsUnoccupied(Color color)
+    {
+        BackToDefaultView(color);
+        _lineData.IsOccupied = false;
     }
 }

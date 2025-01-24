@@ -13,6 +13,7 @@ public class GridDotsController: BaseGridController<GridDotData, GridDotItem>
         
         CreateDots();
     }
+    
 
     public void AssignConnectedLines(List<GridLineData> lineDataList)
     {
@@ -85,5 +86,28 @@ public class GridDotsController: BaseGridController<GridDotData, GridDotItem>
         float posX = _levelData.DotStartPos.x + (columnIndexNo * gap);
         float posY = _levelData.DotStartPos.y + (rowIndexNo * gap);
         return new Vector3(posX, posY);
+    }
+    
+    public static int GetConnectedDotLocationIndex(int cellCountInRow, int dotIndexNo, ShapeDirections shapeDirection)
+    {
+        int nextDotIndexNo = dotIndexNo;
+
+        switch (shapeDirection)
+        {
+            case ShapeDirections.Left:
+                nextDotIndexNo--;
+                break;
+            case ShapeDirections.Right:
+                nextDotIndexNo++;
+                break;
+            case ShapeDirections.Up:
+                nextDotIndexNo += cellCountInRow + 1;
+                break;
+            case ShapeDirections.Down:
+                nextDotIndexNo -= cellCountInRow + 1;
+                break;
+        }
+        
+        return nextDotIndexNo;
     }
 }

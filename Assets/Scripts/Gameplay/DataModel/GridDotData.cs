@@ -18,7 +18,6 @@ public class GridDotData : BaseGridData
         _locationIndexNo = locationIndexNo;
         _gridPosition = gridPosition;
         _dotIcon = dotIcon;
-        // _connectedLineList = new GridLineData[4];
     }
 
     public new void Clear()
@@ -35,6 +34,7 @@ public class GridDotData : BaseGridData
     public bool IsConnectedLineAvailable(ShapeDirections firstDirection)
     {
         GridLineData lineData = _connectedLineList[(int)firstDirection];
+        // Debug.Log($"IsConnectedLineAvailable:{lineData.IsOccupied}");
         return lineData != null && !lineData.IsOccupied;
     }
 

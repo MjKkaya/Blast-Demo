@@ -18,7 +18,8 @@ MonoBehaviour:
   DotStartPos: {x: 0, y: 0}
   GapBetweenCell: 150
   DotIcon: {fileID: 0}
-  CellDefaultColor: {r: 0, g: 0, b: 0, a: 0}
-  CellFullColor: {r: 0, g: 0, b: 0, a: 0}
-  LineDefaultColor: {r: 0, g: 0, b: 0, a: 0}
-  LineFullColor: {r: 0, g: 0, b: 0, a: 0}
+  CellDefaultColor: {r: 0, g: 0, b: 1, a: 1}
+  CellFullColor: {r: 1, g: 0, b: 0, a: 1}
+  LineDefaultColor: {r: 1, g: 1, b: 1, a: 1}
+  LineHighlightedColor: {r: 0, g: 1, b: 0, a: 1}
+  LineFullColor: {r: 1, g: 0, b: 0, a: 1}

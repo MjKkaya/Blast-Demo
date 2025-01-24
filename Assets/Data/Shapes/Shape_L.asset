@@ -13,3 +13,5 @@ MonoBehaviour:
   m_Name: Shape_L
   m_EditorClassIdentifier: 
   ShapeDirection: 0000000002000000
+  HeightFactor: 0
+  WidthFactor: 0.5
